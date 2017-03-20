@@ -47,7 +47,14 @@ public class EarthquakeCityMap extends PApplet {
 	private UnfoldingMap map;
 	
 	//feed with magnitude 2.5+ Earthquakes
-	private String earthquakesURL = "http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
+	private String earthquakesURL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom";
+	
+    // Here is an example of how to use Processing's color method to generate 
+    // an int that represents the color yellow.  
+    private int yellow = color(255, 255, 150);
+    private int blue = color(150, 150, 255);
+    private int red = color(255, 150, 150);
+    private int white = color(255, 255, 255);
 
 	
 	public void setup() {
@@ -61,6 +68,7 @@ public class EarthquakeCityMap extends PApplet {
 			map = new UnfoldingMap(this, 200, 50, 700, 500, new Google.GoogleMapProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
 			//earthquakesURL = "2.5_week.atom";
+			
 		}
 		
 	    map.zoomToLevel(2);
@@ -73,19 +81,27 @@ public class EarthquakeCityMap extends PApplet {
 	    //PointFeatures have a getLocation method
 	    List<PointFeature> earthquakes = ParseFeed.parseEarthquake(this, earthquakesURL);
 	    
-	    // These print statements show you (1) all of the relevant properties 
-	    // in the features, and (2) how to get one property and use it
-	    if (earthquakes.size() > 0) {
-	    	PointFeature f = earthquakes.get(0);
-	    	System.out.println(f.getProperties());
-	    	Object magObj = f.getProperty("magnitude");
-	    	float mag = Float.parseFloat(magObj.toString());
-	    	// PointFeatures also have a getLocation method
+	    for (PointFeature eq: earthquakes) {
+	    	markers.add(createMarker(eq));
 	    }
 	    
-	    // Here is an example of how to use Processing's color method to generate 
-	    // an int that represents the color yellow.  
-	    int yellow = color(255, 255, 0);
+	    map.addMarkers(markers);
+	    
+//	    // These print statements show you (1) all of the relevant properties 
+//	    // in the features, and (2) how to get one property and use it
+//	    if (earthquakes.size() > 0) {
+//	    	PointFeature f = earthquakes.get(0);
+//	    	System.out.println(f.getProperties());
+//	    	Object magObj = f.getProperty("magnitude");
+//	    	float mag = Float.parseFloat(magObj.toString());
+//	    	// PointFeatures also have a getLocation method
+//	    }
+//	    
+//	    // Here is an example of how to use Processing's color method to generate 
+//	    // an int that represents the color yellow.  
+//	    int yellow = color(255, 255, 150);
+//	    int blue = color(150, 150, 255);
+//	    int red = color(255, 150, 150);
 	    
 	    //TODO: Add code here as appropriate
 	}
@@ -95,8 +111,21 @@ public class EarthquakeCityMap extends PApplet {
 	// TODO: Implement this method and call it from setUp, if it helps
 	private SimplePointMarker createMarker(PointFeature feature)
 	{
-		// finish implementing and use this method, if it helps.
-		return new SimplePointMarker(feature.getLocation());
+		// finish implementing and use this method, if it helps.	    
+		SimplePointMarker mk = new SimplePointMarker(feature.getLocation());
+		if ((float) feature.getProperty("magnitude") < 4) {
+    		mk.setColor(blue);
+    		mk.setStrokeWeight(0);
+    	} else if ((float) feature.getProperty("magnitude") < 4.9) {
+    		mk.setColor(yellow);
+    		mk.setStrokeColor(yellow);
+    		mk.setStrokeWeight(3);
+    	} else {
+    		mk.setColor(red);
+    		mk.setStrokeColor(red);
+    		mk.setStrokeWeight(6);
+    	}
+		return mk;
 	}
 	
 	public void draw() {
@@ -111,6 +140,32 @@ public class EarthquakeCityMap extends PApplet {
 	private void addKey() 
 	{	
 		// Remember you can use Processing's graphics methods here
-	
+		fill(white);
+		
+		int xbase = 25;
+		int ybase = 50;
+		int width = 150;
+		int height = 250;
+		
+		rect(xbase, ybase, width, height);
+		
+		fill(0);
+		textAlign(LEFT, CENTER);
+		textSize(12);
+		text("Earthquake Key", xbase+25, ybase+25);
+		
+		fill(blue);
+		ellipse(xbase+35, ybase+70, 12, 12);
+		fill(yellow);
+		ellipse(xbase+35, ybase+90, 12, 12);
+		fill(red);
+		ellipse(xbase+35, ybase+110, 12, 12);
+		
+		textAlign(LEFT, CENTER);
+		fill(0, 0, 0);
+		text("Below 4.0", xbase+50, ybase+70);
+		text("4.0+ Magnitude", xbase+50, ybase+90);
+		text("5.0+ Magnitude", xbase+50, ybase+110);
+
 	}
 }

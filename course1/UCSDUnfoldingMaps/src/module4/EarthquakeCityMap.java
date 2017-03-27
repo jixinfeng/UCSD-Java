@@ -1,7 +1,7 @@
 package module4;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.Map.Entry;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
 import de.fhpotsdam.unfolding.data.Feature;
@@ -77,7 +77,7 @@ public class EarthquakeCityMap extends PApplet {
 		// FOR TESTING: Set earthquakesURL to be one of the testing files by uncommenting
 		// one of the lines below.  This will work whether you are online or offline
 		//earthquakesURL = "test1.atom";
-		//earthquakesURL = "test2.atom";
+		earthquakesURL = "test2.atom";
 		
 		// WHEN TAKING THIS QUIZ: Uncomment the next line
 		//earthquakesURL = "quiz1.atom";
@@ -163,9 +163,11 @@ public class EarthquakeCityMap extends PApplet {
 	private boolean isLand(PointFeature earthquake) {
 		
 		// IMPLEMENT THIS: loop over all countries to check if location is in any of them
-		
-		// TODO: Implement this method using the helper method isInCountry
-		
+		for (Marker country: countryMarkers) {
+			if (isInCountry(earthquake, country)){
+				return true;
+			}
+		}
 		// not inside any country
 		return false;
 	}
@@ -176,9 +178,27 @@ public class EarthquakeCityMap extends PApplet {
 	// the quakes to count how many occurred in that country.
 	// Recall that the country markers have a "name" property, 
 	// And LandQuakeMarkers have a "country" property set.
-	private void printQuakes() 
-	{
+	private void printQuakes() {
 		// TODO: Implement this method
+		HashMap<Object, Integer> eqCount = new HashMap<Object, Integer>();
+		for (Marker country: countryMarkers) {
+			eqCount.put(country.getProperty("name"), 0);
+		}
+		int oceanCount = 0;
+		
+		for (Marker eq: quakeMarkers) {
+			if (eqCount.containsKey(eq.getProperty("country"))) {
+				eqCount.put(eq.getProperty("country"), eqCount.get(eq.getProperty("country")) + 1);
+			} else {
+				oceanCount += 1;
+			}
+		}
+		for (Entry<Object, Integer> entry : eqCount.entrySet()){
+			if (entry.getValue() > 0) {
+				System.out.println(entry.getKey().toString() + ":" + entry.getValue().toString());
+			}
+		}
+		System.out.println("Ocean : " + str(oceanCount));
 	}
 	
 	

@@ -72,7 +72,7 @@ public class EarthquakeCityMap extends PApplet {
 		else {
 			map = new UnfoldingMap(this, 200, 50, 650, 600, new Google.GoogleMapProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
-		    //earthquakesURL = "2.5_week.atom";
+		    earthquakesURL = "2.5_week.atom";
 		}
 		MapUtils.createDefaultEventDispatcher(this, map);
 		
@@ -146,6 +146,13 @@ public class EarthquakeCityMap extends PApplet {
 	private void selectMarkerIfHover(List<Marker> markers)
 	{
 		// TODO: Implement this method
+		for (Marker marker : markers) {
+			if (marker.isInside(map, mouseX, mouseY) && lastSelected == null) {
+				lastSelected = (CommonMarker) marker;
+				lastSelected.setSelected(true);
+				break;
+			}
+		}
 	}
 	
 	/** The event handler for mouse clicks
@@ -159,6 +166,52 @@ public class EarthquakeCityMap extends PApplet {
 		// TODO: Implement this method
 		// Hint: You probably want a helper method or two to keep this code
 		// from getting too long/disorganized
+		if (lastClicked != null) {
+			lastClicked = null;
+			unhideMarkers();
+		} else {
+			findEarthquakeClicked();
+			if (lastClicked == null) {
+				findCityClicked();
+			}
+		}
+	}
+	
+	private void findEarthquakeClicked() {
+		if (lastClicked != null) {return;}
+		for (Marker eq: quakeMarkers) {
+			EarthquakeMarker eqCurr = (EarthquakeMarker) eq;
+			if (!eqCurr.isHidden() && eqCurr.isInside(map, mouseX, mouseY)) {
+				lastClicked = eqCurr;
+				for (Marker eqHide: quakeMarkers) {
+					if (eqHide != eqCurr) {
+						eqHide.setHidden(true);
+					}
+				}
+				for (Marker cityHide: cityMarkers) {
+					if (cityHide.getDistanceTo(eqCurr.getLocation()) > eqCurr.threatCircle()) {
+						cityHide.setHidden(true);
+					}
+				}
+				return;
+			}
+		}
+	}
+	
+	private void findCityClicked() {
+		if (lastClicked != null) {return;}
+		for (Marker city: cityMarkers) {
+			CityMarker cityCurr = (CityMarker) city;
+			if (!cityCurr.isHidden() && cityCurr.isInside(map, mouseX, mouseY)) {
+				lastClicked = cityCurr;
+				for (Marker cityHide: cityMarkers) {
+					if (cityHide != cityCurr) {
+						cityHide.setHidden(true);
+					}
+				}
+				return;
+			}
+		}
 	}
 	
 	
@@ -167,7 +220,6 @@ public class EarthquakeCityMap extends PApplet {
 		for(Marker marker : quakeMarkers) {
 			marker.setHidden(false);
 		}
-			
 		for(Marker marker : cityMarkers) {
 			marker.setHidden(false);
 		}

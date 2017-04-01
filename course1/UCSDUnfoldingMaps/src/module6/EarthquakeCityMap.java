@@ -2,6 +2,7 @@ package module6;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
@@ -36,7 +37,7 @@ public class EarthquakeCityMap extends PApplet {
 	private static final long serialVersionUID = 1L;
 
 	// IF YOU ARE WORKING OFFILINE, change the value of this variable to true
-	private static final boolean offline = false;
+	private static final boolean offline = true;
 	
 	/** This is where to find the local tiles, for working without an Internet connection */
 	public static String mbTilesString = "blankLight-1-3.mbtiles";
@@ -60,6 +61,9 @@ public class EarthquakeCityMap extends PApplet {
 
 	// A List of country markers
 	private List<Marker> countryMarkers;
+	
+	// Lists of airports
+	private List<Marker> airportList;
 	
 	// NEW IN MODULE 5
 	private CommonMarker lastSelected;
@@ -104,6 +108,23 @@ public class EarthquakeCityMap extends PApplet {
 	    List<PointFeature> earthquakes = ParseFeed.parseEarthquake(this, earthquakesURL);
 	    quakeMarkers = new ArrayList<Marker>();
 	    
+	    //     STEP 4: read in airport data
+	    List<PointFeature> airportsLst = ParseFeed.parseAirports(this, "airports.dat");
+	 	airportList = new ArrayList<Marker>();
+	 	HashMap<Integer, Location> airports = new HashMap<Integer, Location>();
+	 	
+	 	// create markers from airportsLst
+	 	for(PointFeature feature : airportsLst) {
+	 		AirportMarker m = new AirportMarker(feature);
+	 	
+	 		m.setRadius(5);
+	 		airportList.add(m);
+	 			
+	 		// put airport in hashmap with OpenFlights unique id for key
+	 		airports.put(Integer.parseInt(feature.getId()), feature.getLocation());
+	 	}
+	 	
+	    
 	    for(PointFeature feature : earthquakes) {
 		  //check if LandQuake
 		  if(isLand(feature)) {
@@ -121,6 +142,7 @@ public class EarthquakeCityMap extends PApplet {
 	    // (3) Add markers to map
 	    //     NOTE: Country markers are not added to the map.  They are used
 	    //           for their geometric properties
+	    map.addMarkers(airportList);
 	    map.addMarkers(quakeMarkers);
 	    map.addMarkers(cityMarkers);
 	    

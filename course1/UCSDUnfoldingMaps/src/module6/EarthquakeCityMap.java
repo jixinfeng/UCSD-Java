@@ -348,6 +348,8 @@ public class EarthquakeCityMap extends PApplet {
 		ellipse(xbase+35, ybase+160, 12, 12);
 		fill(color(255, 0, 0));
 		ellipse(xbase+35, ybase+180, 12, 12);
+		fill(color(0, 0, 0));
+		ellipse(xbase+35, ybase+230, 2, 2);
 		
 		textAlign(LEFT, CENTER);
 		fill(0, 0, 0);
@@ -356,6 +358,8 @@ public class EarthquakeCityMap extends PApplet {
 		text("Deep", xbase+50, ybase+180);
 
 		text("Past hour", xbase+50, ybase+200);
+		
+		text("Airport", xbase+50, ybase+230);
 		
 		fill(255, 255, 255);
 		int centerx = xbase+35;

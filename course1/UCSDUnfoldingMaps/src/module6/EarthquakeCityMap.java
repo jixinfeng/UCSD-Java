@@ -63,7 +63,7 @@ public class EarthquakeCityMap extends PApplet {
 	private List<Marker> countryMarkers;
 	
 	// Lists of airports
-	private List<Marker> airportList;
+	private List<Marker> airportMarkers;
 	
 	// NEW IN MODULE 5
 	private CommonMarker lastSelected;
@@ -109,19 +109,12 @@ public class EarthquakeCityMap extends PApplet {
 	    quakeMarkers = new ArrayList<Marker>();
 	    
 	    //     STEP 4: read in airport data
-	    List<PointFeature> airportsLst = ParseFeed.parseAirports(this, "airports.dat");
-	 	airportList = new ArrayList<Marker>();
-	 	HashMap<Integer, Location> airports = new HashMap<Integer, Location>();
+	    List<PointFeature> airports = ParseFeed.parseAirports(this, "airports.dat");
+	 	airportMarkers = new ArrayList<Marker>();
 	 	
-	 	// create markers from airportsLst
-	 	for(PointFeature feature : airportsLst) {
-	 		AirportMarker m = new AirportMarker(feature);
-	 	
-	 		m.setRadius(5);
-	 		airportList.add(m);
-	 			
-	 		// put airport in hashmap with OpenFlights unique id for key
-	 		airports.put(Integer.parseInt(feature.getId()), feature.getLocation());
+	 	// create markers from airports
+	 	for(PointFeature feature : airports) {
+	 		airportMarkers.add(new AirportMarker(feature));
 	 	}
 	 	
 	    
@@ -137,12 +130,12 @@ public class EarthquakeCityMap extends PApplet {
 	    }
 
 	    // could be used for debugging
-	    printQuakes();
+	    //printQuakes();
 	 		
 	    // (3) Add markers to map
 	    //     NOTE: Country markers are not added to the map.  They are used
 	    //           for their geometric properties
-	    map.addMarkers(airportList);
+	    map.addMarkers(airportMarkers);
 	    map.addMarkers(quakeMarkers);
 	    map.addMarkers(cityMarkers);
 	    
@@ -255,6 +248,9 @@ public class EarthquakeCityMap extends PApplet {
 						quakeMarker.setHidden(true);
 					}
 				}
+				for (Marker mhide : airportMarkers) {
+					mhide.setHidden(true);
+				}
 				return;
 			}
 		}		
@@ -282,6 +278,13 @@ public class EarthquakeCityMap extends PApplet {
 						mhide.setHidden(true);
 					}
 				}
+				
+				for (Marker mhide : airportMarkers) {
+					if (mhide.getDistanceTo(marker.getLocation()) 
+							> marker.threatCircle()) {
+						mhide.setHidden(true);
+					}
+				}
 				return;
 			}
 		}
@@ -294,6 +297,10 @@ public class EarthquakeCityMap extends PApplet {
 		}
 			
 		for(Marker marker : cityMarkers) {
+			marker.setHidden(false);
+		}
+		
+		for(Marker marker : airportMarkers) {
 			marker.setHidden(false);
 		}
 	}

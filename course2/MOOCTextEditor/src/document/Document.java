@@ -67,7 +67,37 @@ public abstract class Document {
 		// TODO: Implement this method so that you can call it from the 
 	    // getNumSyllables method in BasicDocument (module 2) and 
 	    // EfficientDocument (module 3).
-	    return 0;
+	    int count = 0;
+	    word = word.toLowerCase();
+	    if (word.charAt(word.length() - 1) == 'e') {
+	    	if (isEndWithSilentE(word)) {
+	    		String trimedword = word.substring(0, word.length() - 1);
+	    		count += countWordSyllable(trimedword);
+	    	} else {
+	    		count++;
+	    	}
+	    } else {
+	    	count += countWordSyllable(word);
+	    }
+		return count;
+	}
+
+	private int countWordSyllable(String word) {
+		int count = 0;
+		Pattern parts = Pattern.compile("[^aeiouy]*[aeiouy]+");
+		Matcher m = parts.matcher(word);
+		
+		while (m.find()) {
+			count++;
+		}
+		return count;
+	}
+	
+	private boolean isEndWithSilentE(String word) {
+		word = word.substring(0, word.length() - 1);
+		Pattern parts = Pattern.compile("[aeiouy]");
+		Matcher m = parts.matcher(word);
+		return m.find();
 	}
 	
 	/** A method for testing
@@ -132,7 +162,10 @@ public abstract class Document {
 	{
 	    // TODO: You will play with this method in week 1, and 
 		// then implement it in week 2
-	    return 0.0;
+	    float nWords = getNumWords();
+	    float nSentences = getNumSentences();
+	    float nSyllables = getNumSyllables();
+		return 206.835 - 1.015 * nWords / nSentences - 84.6 * nSyllables / nWords;
 	}
 	
 	

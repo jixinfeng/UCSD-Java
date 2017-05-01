@@ -126,6 +126,13 @@ public class MyLinkedListTester {
 		catch (IndexOutOfBoundsException e) {
 		}
 		
+		try {
+			list1.remove(-1);
+			fail("Check out of bounds");
+		}
+		catch (IndexOutOfBoundsException e) {
+		}
+		
 		int b = list1.remove(1);
 		assertEquals("Remove: check a is correct ", 42, b);
 		assertEquals("Remove: check element 0 is correct ", (Integer)21, list1.get(0));
@@ -147,13 +154,10 @@ public class MyLinkedListTester {
 			listTestAddEnd.add(null);
 			fail("Check null pointer");
 		} catch (NullPointerException e) {}
-		
 		assertEquals("AddEnd: check list is empty ", 0, listTestAddEnd.size());
 		listTestAddEnd.add(0);
 		assertEquals("AddEnd: check list size grows correctly ", 1, listTestAddEnd.size());
 		assertEquals("AddEnd: check list adds correct element to the end ", (Integer)0, listTestAddEnd.get(0));
-		listTestAddEnd.add(null);
-		assertEquals("AddEnd: check list not append null element ", 1, listTestAddEnd.size());
 	}
 
 	
@@ -184,10 +188,18 @@ public class MyLinkedListTester {
 			longerList.add(100, 1);
 			fail("Check out of bounds");
 		} catch (IndexOutOfBoundsException e) {}
+		
+		try {
+			longerList.add(-1, 1);
+			fail("Check out of bounds");
+		} catch (IndexOutOfBoundsException e) {}
+		
 		try {
 			longerList.add(3, null);
 			fail("Check null pointer");
 		} catch (NullPointerException e) {}
+		
+		
 		longerList.add(longerList.size(), 100);
 		assertEquals("AddAtIndex: check value added", (Integer)100, longerList.get(longerList.size() - 1));
 		longerList.add(5, 100);

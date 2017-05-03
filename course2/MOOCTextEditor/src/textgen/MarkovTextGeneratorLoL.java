@@ -37,9 +37,18 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	{
 		// TODO: Implement this method
 		List<String> wordsFromSource = splitWords(sourceText);
-		System.out.println("Print splited words:");
-		System.out.println(wordsFromSource);
+//		System.out.println("Print splited words:");
+//		System.out.println(wordsFromSource);
 		int wordsLength = wordsFromSource.size();
+		
+		if (wordsLength == 0) {return;}
+		else if (wordsLength == 1) 
+		{
+			wordList.add(new ListNode(wordsFromSource.get(0)));
+			return;
+		}
+		
+		int nodeToAppendIndex = 0;
 		for (int i = 0; i< wordsLength - 1; i++)
 		{
 			String newWord = wordsFromSource.get(i); 
@@ -50,18 +59,18 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 				String currWord = currNode.getWord();
 				if (currWord.equals(newWord))
 				{
-					String nextWord = wordsFromSource.get(i + 1);
-					currNode.addNextWord(nextWord);
+					nodeToAppendIndex = j;
 					foundWord = true;
 					break;
 				}
 			}
 			if (!foundWord)
 			{
-				String nextWord = wordsFromSource.get(i + 1);
+				nodeToAppendIndex = wordList.size();
 				wordList.add(new ListNode(newWord));
-				wordList.get(wordList.size() - 1).addNextWord(nextWord);
 			}
+			String nextWord = wordsFromSource.get(i + 1);
+			wordList.get(nodeToAppendIndex).addNextWord(nextWord);
 		}
 	}
 	
@@ -153,44 +162,39 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	{
 		// feed the generator a fixed random value for repeatable behavior
 		MarkovTextGeneratorLoL gen = new MarkovTextGeneratorLoL(new Random(42));
-		String textString = "Hello there you";
+		String textString = "Hello.  Hello there.  This is a test.  Hello there.  Hello Bob.  Test again.";
 		System.out.println(textString);
 		gen.train(textString);
 		System.out.println(gen);
 		System.out.println(gen.generateText(20));
-//		String textString = "Hello.  Hello there.  This is a test.  Hello there.  Hello Bob.  Test again.";
-//		System.out.println(textString);
-//		gen.train(textString);
-//		System.out.println(gen);
-//		System.out.println(gen.generateText(20));
-//		String textString2 = "You say yes, I say no, "+
-//				"You say stop, and I say go, go, go, "+
-//				"Oh no. You say goodbye and I say hello, hello, hello, "+
-//				"I don't know why you say goodbye, I say hello, hello, hello, "+
-//				"I don't know why you say goodbye, I say hello. "+
-//				"I say high, you say low, "+
-//				"You say why, and I say I don't know. "+
-//				"Oh no. "+
-//				"You say goodbye and I say hello, hello, hello. "+
-//				"I don't know why you say goodbye, I say hello, hello, hello, "+
-//				"I don't know why you say goodbye, I say hello. "+
-//				"Why, why, why, why, why, why, "+
-//				"Do you say goodbye. "+
-//				"Oh no. "+
-//				"You say goodbye and I say hello, hello, hello. "+
-//				"I don't know why you say goodbye, I say hello, hello, hello, "+
-//				"I don't know why you say goodbye, I say hello. "+
-//				"You say yes, I say no, "+
-//				"You say stop and I say go, go, go. "+
-//				"Oh, oh no. "+
-//				"You say goodbye and I say hello, hello, hello. "+
-//				"I don't know why you say goodbye, I say hello, hello, hello, "+
-//				"I don't know why you say goodbye, I say hello, hello, hello, "+
-//				"I don't know why you say goodbye, I say hello, hello, hello,";
-//		System.out.println(textString2);
-//		gen.retrain(textString2);
-//		System.out.println(gen);
-//		System.out.println(gen.generateText(20));
+		String textString2 = "You say yes, I say no, "+
+				"You say stop, and I say go, go, go, "+
+				"Oh no. You say goodbye and I say hello, hello, hello, "+
+				"I don't know why you say goodbye, I say hello, hello, hello, "+
+				"I don't know why you say goodbye, I say hello. "+
+				"I say high, you say low, "+
+				"You say why, and I say I don't know. "+
+				"Oh no. "+
+				"You say goodbye and I say hello, hello, hello. "+
+				"I don't know why you say goodbye, I say hello, hello, hello, "+
+				"I don't know why you say goodbye, I say hello. "+
+				"Why, why, why, why, why, why, "+
+				"Do you say goodbye. "+
+				"Oh no. "+
+				"You say goodbye and I say hello, hello, hello. "+
+				"I don't know why you say goodbye, I say hello, hello, hello, "+
+				"I don't know why you say goodbye, I say hello. "+
+				"You say yes, I say no, "+
+				"You say stop and I say go, go, go. "+
+				"Oh, oh no. "+
+				"You say goodbye and I say hello, hello, hello. "+
+				"I don't know why you say goodbye, I say hello, hello, hello, "+
+				"I don't know why you say goodbye, I say hello, hello, hello, "+
+				"I don't know why you say goodbye, I say hello, hello, hello,";
+		System.out.println(textString2);
+		gen.retrain(textString2);
+		System.out.println(gen);
+		System.out.println(gen.generateText(20));
 	}
 
 }

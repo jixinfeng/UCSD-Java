@@ -36,41 +36,25 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	public void train(String sourceText)
 	{
 		// TODO: Implement this method
-		List<String> wordsFromSource = splitWords(sourceText);
-//		System.out.println("Print splited words:");
-//		System.out.println(wordsFromSource);
-		int wordsLength = wordsFromSource.size();
-		
-		if (wordsLength == 0) {return;}
-		else if (wordsLength == 1) 
+		if (sourceText.length() == 0) 
 		{
-			wordList.add(new ListNode(wordsFromSource.get(0)));
+			System.out.println("No input string!");
 			return;
-		}
-		
-		int nodeToAppendIndex = 0;
-		for (int i = 0; i< wordsLength - 1; i++)
+		} 
+		else 
 		{
-			String newWord = wordsFromSource.get(i); 
-			boolean foundWord = false;
-			for (int j = 0; j < wordList.size(); j++)
+			String[] wordsFromSource = sourceText.split("\\s+");
+			int wordsLength = wordsFromSource.length;
+	
+			starter = wordsFromSource[0];
+			String prevWord = starter; 
+			for (int i = 1; i < wordsLength; i++)
 			{
-				ListNode currNode = wordList.get(j);
-				String currWord = currNode.getWord();
-				if (currWord.equals(newWord))
-				{
-					nodeToAppendIndex = j;
-					foundWord = true;
-					break;
-				}
+				String currWord = wordsFromSource[i];
+				findAndAppend(prevWord, currWord);
+				prevWord = currWord; 
 			}
-			if (!foundWord)
-			{
-				nodeToAppendIndex = wordList.size();
-				wordList.add(new ListNode(newWord));
-			}
-			String nextWord = wordsFromSource.get(i + 1);
-			wordList.get(nodeToAppendIndex).addNextWord(nextWord);
+			findAndAppend(prevWord, starter);
 		}
 	}
 	
@@ -80,15 +64,24 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	@Override
 	public String generateText(int numWords) {
 	    // TODO: Implement this method
+		String generatedText = "";
+		if (wordList.isEmpty()) 
+		{
+			System.out.println("Haven't been trained!");
+			return generatedText;
+		}
+		else if (numWords == 0) {return generatedText;}
+		
+		String currWord = starter;
 		List<String> generatedWords = new ArrayList<String>();
-		String currWord = pickRandomWord();
 		generatedWords.add(currWord);
-		for (int i = 0; i < numWords; i++)
+		while (generatedWords.size() < numWords)
 		{
 			currWord = pickNextWord(currWord);
 			generatedWords.add(currWord);
 		}
-		return String.join(" ", generatedWords);
+		generatedText = String.join(" ", generatedWords);
+		return generatedText;
 	}
 	
 	
@@ -110,15 +103,26 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	{
 		// TODO: Implement this method.
 		wordList = new LinkedList<ListNode>();
+		starter = "";
 		train(sourceText);
 	}
 	
 	// TODO: Add any private helper methods you need here.
 	private String pickRandomWord()
 	{
-		int firstWordIndex = rnGenerator.nextInt(wordList.size());
-		String firstWord = wordList.get(firstWordIndex).getWord();
-		return firstWord;
+		int randomWordIndex;
+		String randomWord;
+		if (wordList.size() > 0) 
+		{
+			randomWordIndex = rnGenerator.nextInt(wordList.size());
+			randomWord = wordList.get(randomWordIndex).getWord();
+		} else
+		{
+			randomWord = "";
+		}
+		
+		
+		return randomWord;
 	}
 	
 	private String pickNextWord(String currWord)
@@ -139,20 +143,29 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 		if (found) {return nextWord;} 
 		else {return pickRandomWord();}
 	}
-	
-    private List<String> splitWords(String text)
-    {	
-    	String pattern = "[a-zA-z']+";
-        ArrayList<String> tokens = new ArrayList<String>();
-        Pattern tokSplitter = Pattern.compile(pattern);
-        Matcher m = tokSplitter.matcher(text);
-        
-        while (m.find()) {
-            tokens.add(m.group().toLowerCase());
-        }
-        
-        return tokens;
-    }
+    
+    private void findAndAppend(String prevWord, String currWord)
+	{
+		int nodeToAppendIndex = 0;
+		boolean foundWord = false;
+		for (int i = 0; i < wordList.size(); i++) 
+		{
+			ListNode currSearchNode = wordList.get(i);
+			String currSearchWord = currSearchNode.getWord();
+			if (currSearchWord.equals(prevWord))
+			{
+				nodeToAppendIndex = i;
+				foundWord = true;
+				break;
+			}
+		}
+		if (!foundWord)
+		{
+			nodeToAppendIndex = wordList.size();
+			wordList.add(new ListNode(prevWord));
+		}
+		wordList.get(nodeToAppendIndex).addNextWord(currWord);
+	}
 	/**
 	 * This is a minimal set of tests.  Note that it can be difficult
 	 * to test methods/classes with randomized behavior.   
@@ -162,39 +175,51 @@ public class MarkovTextGeneratorLoL implements MarkovTextGenerator {
 	{
 		// feed the generator a fixed random value for repeatable behavior
 		MarkovTextGeneratorLoL gen = new MarkovTextGeneratorLoL(new Random(42));
-		String textString = "Hello.  Hello there.  This is a test.  Hello there.  Hello Bob.  Test again.";
+		String textString = "a b c d";
+		System.out.println(textString);
+		gen.train(textString);
+		System.out.println(gen);
+		System.out.println(gen.generateText(10));
+		
+		textString = "w x y z";
 		System.out.println(textString);
 		gen.train(textString);
 		System.out.println(gen);
 		System.out.println(gen.generateText(20));
-		String textString2 = "You say yes, I say no, "+
-				"You say stop, and I say go, go, go, "+
-				"Oh no. You say goodbye and I say hello, hello, hello, "+
-				"I don't know why you say goodbye, I say hello, hello, hello, "+
-				"I don't know why you say goodbye, I say hello. "+
-				"I say high, you say low, "+
-				"You say why, and I say I don't know. "+
-				"Oh no. "+
-				"You say goodbye and I say hello, hello, hello. "+
-				"I don't know why you say goodbye, I say hello, hello, hello, "+
-				"I don't know why you say goodbye, I say hello. "+
-				"Why, why, why, why, why, why, "+
-				"Do you say goodbye. "+
-				"Oh no. "+
-				"You say goodbye and I say hello, hello, hello. "+
-				"I don't know why you say goodbye, I say hello, hello, hello, "+
-				"I don't know why you say goodbye, I say hello. "+
-				"You say yes, I say no, "+
-				"You say stop and I say go, go, go. "+
-				"Oh, oh no. "+
-				"You say goodbye and I say hello, hello, hello. "+
-				"I don't know why you say goodbye, I say hello, hello, hello, "+
-				"I don't know why you say goodbye, I say hello, hello, hello, "+
-				"I don't know why you say goodbye, I say hello, hello, hello,";
-		System.out.println(textString2);
-		gen.retrain(textString2);
-		System.out.println(gen);
-		System.out.println(gen.generateText(20));
+		
+//		String textString = "Hello.  Hello there.  This is a test.  Hello there.  Hello Bob.  Test again.";
+//		System.out.println(textString);
+//		gen.train(textString);
+//		System.out.println(gen);
+//		System.out.println(gen.generateText(20));
+//		String textString2 = "You say yes, I say no, "+
+//				"You say stop, and I say go, go, go, "+
+//				"Oh no. You say goodbye and I say hello, hello, hello, "+
+//				"I don't know why you say goodbye, I say hello, hello, hello, "+
+//				"I don't know why you say goodbye, I say hello. "+
+//				"I say high, you say low, "+
+//				"You say why, and I say I don't know. "+
+//				"Oh no. "+
+//				"You say goodbye and I say hello, hello, hello. "+
+//				"I don't know why you say goodbye, I say hello, hello, hello, "+
+//				"I don't know why you say goodbye, I say hello. "+
+//				"Why, why, why, why, why, why, "+
+//				"Do you say goodbye. "+
+//				"Oh no. "+
+//				"You say goodbye and I say hello, hello, hello. "+
+//				"I don't know why you say goodbye, I say hello, hello, hello, "+
+//				"I don't know why you say goodbye, I say hello. "+
+//				"You say yes, I say no, "+
+//				"You say stop and I say go, go, go. "+
+//				"Oh, oh no. "+
+//				"You say goodbye and I say hello, hello, hello. "+
+//				"I don't know why you say goodbye, I say hello, hello, hello, "+
+//				"I don't know why you say goodbye, I say hello, hello, hello, "+
+//				"I don't know why you say goodbye, I say hello, hello, hello,";
+//		System.out.println(textString2);
+//		gen.retrain(textString2);
+//		System.out.println(gen);
+//		System.out.println(gen.generateText(20));
 	}
 
 }

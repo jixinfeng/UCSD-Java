@@ -2,6 +2,7 @@ package spelling;
 
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,6 +21,7 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
     public AutoCompleteDictionaryTrie()
 	{
 		root = new TrieNode();
+		size = 0;
 	}
 	
 	
@@ -40,7 +42,20 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
 	public boolean addWord(String word)
 	{
 	    //TODO: Implement this method.
-	    return false;
+		if (word == null || word.equals("") || isWord(word)) {return false;}
+		word = word.toLowerCase();
+		TrieNode currNode = root;
+		for (char c : word.toCharArray())
+		{
+//			System.out.println(currNode.getText());
+			if (currNode.getChild(c) == null) {currNode.insert(c);}
+			currNode = currNode.getChild(c);
+		}
+		currNode.setEndsWord(true);
+		size++;
+//		System.out.println(currNode.getText());
+//		System.out.println(size);
+	    return true;
 	}
 	
 	/** 
@@ -60,7 +75,17 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
 	public boolean isWord(String s) 
 	{
 	    // TODO: Implement this method
-		return false;
+//		if (s == null || s.equals("")) {return false;}
+		s = s.toLowerCase();
+		TrieNode currNode = root;
+		TrieNode child;
+		for (char c : s.toCharArray())
+		{
+			child = currNode.getChild(c);
+			if (child == null) {return false;} 
+			else {currNode = child;}
+		}
+		return currNode.endsWord();
 	}
 
 	/** 
@@ -100,8 +125,32 @@ public class AutoCompleteDictionaryTrie implements  Dictionary, AutoComplete {
     	 //       If it is a word, add it to the completions list
     	 //       Add all of its child nodes to the back of the queue
     	 // Return the list of completions
+    	 prefix = prefix.toLowerCase();
+    	 if (prefix == null) {return new ArrayList<String>();}
     	 
-         return null;
+    	 TrieNode currNode = root;
+    	 TrieNode child;
+    	 for (char c : prefix.toCharArray())
+    	 {
+    		 child = currNode.getChild(c);
+    		 if (child == null) {return new ArrayList<String>();}
+    		 else {currNode = child;}
+    	 }
+    	 
+    	 List<String> words = new ArrayList<String>();
+    	 LinkedList<TrieNode> queue = new LinkedList<TrieNode>();
+    	 queue.add(currNode);
+    	 
+    	 while (!queue.isEmpty() && words.size() < numCompletions)
+    	 {
+    		 currNode = queue.remove();
+    		 if (currNode.endsWord()) {words.add(currNode.getText());}
+    		 for (char c : currNode.getValidNextCharacters())
+    		 {
+    			 queue.add(currNode.getChild(c));
+    		 }
+    	 }
+    	 return words;
      }
 
  	// For debugging

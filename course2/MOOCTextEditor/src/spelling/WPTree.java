@@ -16,20 +16,21 @@ import java.util.List;
  *
  */
 public class WPTree implements WordPath {
-
+	private static final int THRESHOLD = 10000; 
 	// this is the root node of the WPTree
 	private WPTreeNode root;
 	// used to search for nearby Words
 	private NearbyWords nw; 
+	private Dictionary d;
 	
 	// This constructor is used by the Text Editor Application
 	// You'll need to create your own NearbyWords object here.
 	public WPTree () {
 		this.root = null;
 		// TODO initialize a NearbyWords object
-		 Dictionary d = new DictionaryHashSet();
-		 DictionaryLoader.loadDictionary(d, "data/dict.txt");
-		 this.nw = new NearbyWords(d);
+		d = new DictionaryHashSet();
+		DictionaryLoader.loadDictionary(d, "data/dict.txt");
+		this.nw = new NearbyWords(d);
 	}
 	
 	//This constructor will be used by the grader code
@@ -42,7 +43,49 @@ public class WPTree implements WordPath {
 	public List<String> findPath(String word1, String word2) 
 	{
 	    // TODO: Implement this method.
-	    return new LinkedList<String>();
+		if (!d.isWord(word2)) {
+			return null;
+		}
+		List<WPTreeNode> queue = new LinkedList<WPTreeNode>();
+		List<String> currNeighbors = new LinkedList<String>();
+		
+		HashSet<String> visited = new HashSet<String>();
+		
+		root = new WPTreeNode(word1, null);
+		if (word1.equals(word2)) {
+			return root.buildPathToRoot();
+		}
+		queue.add(root);
+		visited.add(word1);
+		
+		WPTreeNode currNode;
+		String currWord;
+		
+		boolean WORDSONLY = true;
+		
+		while (!queue.isEmpty() && visited.size() < THRESHOLD) {
+			currNode = queue.remove(0);
+			currWord = currNode.getWord();
+//			if (currWord.equals(word2)) {
+//				return currNode.buildPathToRoot();
+//			}
+			currNeighbors = nw.distanceOne(currWord, WORDSONLY);
+			
+			for (String neighbor : currNeighbors) {
+				if (visited.contains(neighbor)) {
+					continue;
+				} else {
+					visited.add(neighbor);
+				}
+				WPTreeNode child = currNode.addChild(neighbor);
+				if (child.getWord().equals(word2)) {
+					return child.buildPathToRoot();
+				} else {
+					queue.add(child);
+				}
+			}
+		}
+	    return null;
 	}
 	
 	// Method to print a list of WPTreeNodes (useful for debugging)
@@ -54,8 +97,7 @@ public class WPTree implements WordPath {
 		}
 		ret+= "]";
 		return ret;
-	}
-	
+	}	
 }
 
 /* Tree Node in a WordPath Tree. This is a standard tree with each
@@ -65,7 +107,6 @@ public class WPTree implements WordPath {
  * substitution) away from its parent
 */
 class WPTreeNode {
-    
     private String word;
     private List<WPTreeNode> children;
     private WPTreeNode parent;
@@ -144,4 +185,3 @@ class WPTreeNode {
     }
 
 }
-

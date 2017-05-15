@@ -105,7 +105,18 @@ public class GraphAdjMatrix extends Graph {
 	 */	
 	public List<Integer> getDistance2(int v) {
 		// XXX Implement this method in week 2
-		return null;
+		List<Integer> neighbors2 = new ArrayList<Integer>();
+		int currEntry;
+		for (int i = 0; i < getNumVertices(); i++) {
+			currEntry = 0;
+			for (int j = 0; j < getNumVertices(); j++) {
+				currEntry += adjMatrix[v][j] * adjMatrix[j][i];
+			}
+			for (int k = 0; k < currEntry; k++) {
+				neighbors2.add(i);
+			}
+		}
+		return neighbors2;
 	}
 	
 	/**

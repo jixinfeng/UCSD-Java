@@ -1,6 +1,5 @@
 package roadgraph;
 
-import java.util.HashSet;
 import geography.GeographicPoint;
 
 class MapEdge {

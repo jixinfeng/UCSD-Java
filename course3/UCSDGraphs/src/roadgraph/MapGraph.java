@@ -26,7 +26,7 @@ import util.GraphLoader;
  *
  */
 public class MapGraph {
-	//TODO: Add your member variables here in WEEK 3
+	// Store vertices/nodes and edges
 	private HashMap<GeographicPoint, MapNode> vertices;
 	private HashSet<MapEdge> edges;
 	
@@ -37,7 +37,6 @@ public class MapGraph {
 	{
 		vertices = new HashMap<GeographicPoint, MapNode>();
 		edges = new HashSet<MapEdge>();
-		// TODO: Implement in this constructor in WEEK 3
 	}
 	
 	/**
@@ -46,8 +45,6 @@ public class MapGraph {
 	 */
 	public int getNumVertices()
 	{
-		//TODO: Implement this method in WEEK 3
-		//DONE
 		return vertices.size();
 	}
 	
@@ -57,13 +54,7 @@ public class MapGraph {
 	 */
 	public Set<GeographicPoint> getVertices()
 	{
-		//TODO: Implement this method in WEEK 3
-		//DONE
-		Set<GeographicPoint> vLocs = new HashSet<GeographicPoint>();
-		for (MapNode vertex: vertices.values()) {
-			vLocs.add(vertex.getLocation());
-		}
-		return vLocs;
+		return vertices.keySet();
 	}
 	
 	/**
@@ -72,13 +63,8 @@ public class MapGraph {
 	 */
 	public int getNumEdges()
 	{
-		//TODO: Implement this method in WEEK 3
-		//DONE
 		return edges.size();
 	}
-
-	
-	
 	/** Add a node corresponding to an intersection at a Geographic Point
 	 * If the location is already in the graph or null, this method does 
 	 * not change the graph.
@@ -88,8 +74,6 @@ public class MapGraph {
 	 */
 	public boolean addVertex(GeographicPoint location)
 	{
-		//TODO: Implement this method in WEEK 3
-		//DONE
 		if (vertices.containsKey(location)){
 			return false;
 		} else {
@@ -116,15 +100,16 @@ public class MapGraph {
 			String roadName,
 			String roadType, 
 			double length) throws IllegalArgumentException {
-		//TODO: Implement this method in WEEK 3
-		//DONE
 		if (!vertices.containsKey(from) || !vertices.containsKey(to)) {
 			throw new IllegalArgumentException();
 		} else if (roadName == null || roadType == null || length < 0) {
 			throw new IllegalArgumentException();
 		} else {
+			// create new edge
 			MapEdge newEdge = new MapEdge(from, to, roadName, roadType, length);
+			// store new edge
 			edges.add(newEdge);
+			// link edge to its associated start node
 			vertices.get(from).addOutEdge(newEdge);
 		}
 	}
@@ -151,11 +136,11 @@ public class MapGraph {
 	 * @return The list of intersections that form the shortest (unweighted)
 	 *   path from start to goal (including both start and goal).
 	 */
-	public List<GeographicPoint> bfs(GeographicPoint start, 
-			 					     GeographicPoint goal, 
-			 					     Consumer<GeographicPoint> nodeSearched)
+	public List<GeographicPoint> bfs(
+			GeographicPoint start,
+			GeographicPoint goal,
+			Consumer<GeographicPoint> nodeSearched)
 	{
-		// TODO: Implement this method in WEEK 3
 		HashMap<GeographicPoint, GeographicPoint> parentMap = new HashMap<GeographicPoint, GeographicPoint>();
 		List<MapNode> queue = new LinkedList<MapNode>();
 		HashSet<MapNode> visited = new HashSet<MapNode>();
@@ -184,9 +169,16 @@ public class MapGraph {
 		return null;
 	}
 	
-	private List<GeographicPoint> parentMap2Path(GeographicPoint start, 
-												 GeographicPoint goal, 
-												 HashMap<GeographicPoint, GeographicPoint> parentMap) {
+	// Convert parent map into path from start to goal as linked list
+	// Return a linked list with only goal node if parent map is empty
+	// Currently this method assume the parent map has all required 
+	// information for building the path
+	// Only been tested with BST but should works fine with Dijkstra 
+	// and A* with minimal revisions
+	private List<GeographicPoint> parentMap2Path(
+			GeographicPoint start,
+			GeographicPoint goal,
+			HashMap<GeographicPoint, GeographicPoint> parentMap) {
 		List<GeographicPoint> path = new LinkedList<GeographicPoint>();
 		path.add(goal);
 		if (parentMap.isEmpty()) {

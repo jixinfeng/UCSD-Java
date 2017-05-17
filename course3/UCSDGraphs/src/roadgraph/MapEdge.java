@@ -3,9 +3,10 @@ package roadgraph;
 import geography.GeographicPoint;
 
 class MapEdge {
+	// two GeographicPoints storing the from and to locations of an edge
 	private GeographicPoint fromLoc;
 	private GeographicPoint toLoc;
-	
+	// Store road name/type/length
 	private String roadName;
 	private String roadType;
 	private double length;
@@ -22,7 +23,8 @@ class MapEdge {
 		this.roadType = roadType;
 		this.length = length;
 	}
-
+	
+	// Methods listed below are just trivial getters and setters
 	public GeographicPoint getFromLoc() {
 		return fromLoc;
 	}

@@ -4,7 +4,9 @@ import java.util.HashSet;
 import geography.GeographicPoint;
 
 class MapNode {
+	// Location of this node
 	private GeographicPoint location;
+	// A hashset of edges pointing out from this node
 	private HashSet<MapEdge> outEdges;
 	
 	public MapNode(GeographicPoint location) {
@@ -13,6 +15,8 @@ class MapNode {
 	}
 	
 	public boolean addOutEdge(MapEdge edge) {
+		// Add edge to outEdges if the new edge is pointing out from this node
+		// and return true. Else return false
 		if (edge.getFromLoc().equals(this.location)) {
 			outEdges.add(edge);
 			return true;
@@ -20,7 +24,8 @@ class MapNode {
 			return false;
 		}
 	}
-
+	
+	// trivial getters and setters
 	public GeographicPoint getLocation() {
 		return location;
 	}

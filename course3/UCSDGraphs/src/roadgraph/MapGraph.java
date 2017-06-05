@@ -236,11 +236,9 @@ public class MapGraph {
 		}
 		
 		dist.put(vertices.get(start), 0.0);
-		int nodeVisited = 0;
 		while (!q.isEmpty()) {
 			MapNode currNode = getClosestNode(q, dist);
 			q.remove(currNode);
-			nodeVisited += 1;
 			nodeSearched.accept(currNode.getLocation());
 			if (currNode.getLocation().equals(goal)) {
 				break;
@@ -254,7 +252,6 @@ public class MapGraph {
 				}
 			}
 		}
-		System.out.println("Dijkstra: " + nodeVisited);
 		return parentMap2Path(start, goal, parentMap); 
 		
 		
@@ -305,11 +302,9 @@ public class MapGraph {
 		
 		dist.put(vertices.get(start), 0.0);
 		est.put(vertices.get(start), goal.distance(start));
-		int nodeVisited = 0;
 		while (!q.isEmpty()) {
 			MapNode currNode = getClosestNode(q, dist, est);
 			q.remove(currNode);
-			nodeVisited += 1;
 			nodeSearched.accept(currNode.getLocation());
 			if (currNode.getLocation().equals(goal)) {
 				break;
@@ -326,7 +321,6 @@ public class MapGraph {
 				}
 			}
 		}
-		System.out.println("A*: " + nodeVisited);
 		return parentMap2Path(start, goal, parentMap); 
 	}
 

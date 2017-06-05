@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.PriorityQueue;
+
 import java.util.function.Consumer;
 
 import geography.GeographicPoint;
@@ -30,6 +32,7 @@ public class MapGraph {
 	private HashMap<GeographicPoint, MapNode> vertices;
 	private HashSet<MapEdge> edges;
 	
+	private double INFINITE = Double.POSITIVE_INFINITY;
 	/** 
 	 * Create a new empty MapGraph 
 	 */
@@ -217,15 +220,46 @@ public class MapGraph {
 	 * @return The list of intersections that form the shortest path from 
 	 *   start to goal (including both start and goal).
 	 */
-	public List<GeographicPoint> dijkstra(GeographicPoint start, 
-										  GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
+	public List<GeographicPoint> dijkstra(
+			GeographicPoint start, 
+			GeographicPoint goal, 
+			Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 4
-
+		Set<MapNode> q = new HashSet<MapNode>();
+		HashMap<MapNode, Double> dist = new HashMap<MapNode, Double>();
+		HashMap<GeographicPoint, GeographicPoint> parentMap = new HashMap<GeographicPoint, GeographicPoint>();
+		
+		for (MapNode node: vertices.values()) {
+			q.add(node);
+			dist.put(node, INFINITE);
+		}
+		
+		dist.put(vertices.get(start), 0.0);
+		int nodeVisited = 0;
+		while (!q.isEmpty()) {
+			MapNode currNode = getClosestNode(q, dist);
+			q.remove(currNode);
+			nodeVisited += 1;
+			nodeSearched.accept(currNode.getLocation());
+			if (currNode.getLocation().equals(goal)) {
+				break;
+			}
+			for (MapNode neighbor: getNeighborNodes(currNode)) {
+				nodeSearched.accept(neighbor.getLocation());
+				double newDist = dist.get(currNode) + getEdge(currNode, neighbor).getLength();
+				if (newDist < dist.get(neighbor)) {
+					dist.put(neighbor, newDist);
+					parentMap.put(neighbor.getLocation(), currNode.getLocation());
+				}
+			}
+		}
+		System.out.println("Dijkstra: " + nodeVisited);
+		return parentMap2Path(start, goal, parentMap); 
+		
+		
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
-		
-		return null;
 	}
 
 	/** Find the path from start to goal using A-Star search
@@ -250,16 +284,113 @@ public class MapGraph {
 	 *   start to goal (including both start and goal).
 	 */
 	public List<GeographicPoint> aStarSearch(GeographicPoint start, 
-											 GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
+											 GeographicPoint goal, 
+											 Consumer<GeographicPoint> nodeSearched)
 	{
 		// TODO: Implement this method in WEEK 4
 		
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
+		Set<MapNode> q = new HashSet<MapNode>();
+		HashMap<MapNode, Double> dist = new HashMap<MapNode, Double>();
+		HashMap<MapNode, Double> est = new HashMap<MapNode, Double>();
+		HashMap<GeographicPoint, GeographicPoint> parentMap = new HashMap<GeographicPoint, GeographicPoint>();
 		
-		return null;
+		for (MapNode node: vertices.values()) {
+			q.add(node);
+			dist.put(node, INFINITE);
+//			est.put(node, goal.distance(node.getLocation()));
+			est.put(node, INFINITE);
+		}
+		
+		dist.put(vertices.get(start), 0.0);
+		est.put(vertices.get(start), goal.distance(start));
+		int nodeVisited = 0;
+		while (!q.isEmpty()) {
+			MapNode currNode = getClosestNode(q, dist, est);
+			q.remove(currNode);
+			nodeVisited += 1;
+			nodeSearched.accept(currNode.getLocation());
+			if (currNode.getLocation().equals(goal)) {
+				break;
+			}
+			for (MapNode neighbor: getNeighborNodes(currNode)) {
+				nodeSearched.accept(neighbor.getLocation());
+				if (est.get(neighbor) == INFINITE) {
+					est.put(neighbor, goal.distance(neighbor.getLocation()));
+				}
+				double newDist = dist.get(currNode) + getEdge(currNode, neighbor).getLength();
+				if (newDist < dist.get(neighbor)) {
+					dist.put(neighbor, newDist);
+					parentMap.put(neighbor.getLocation(), currNode.getLocation());
+				}
+			}
+		}
+		System.out.println("A*: " + nodeVisited);
+		return parentMap2Path(start, goal, parentMap); 
 	}
 
+	
+	private List<MapNode> getNeighborNodes(MapNode node) {
+		List<MapNode> neighbors = new LinkedList<MapNode>();
+		for (MapEdge outEdge: node.getOutEdges()) {
+			neighbors.add(vertices.get(outEdge.getToLoc()));
+		}
+		return neighbors;
+	}
+	
+	private MapEdge getEdge(GeographicPoint fromLoc, GeographicPoint toLoc) {
+		if (!vertices.containsKey(fromLoc) || ! vertices.containsKey(toLoc)) {
+			return null;
+		} else {
+			MapNode fromNode = vertices.get(fromLoc);
+			MapNode toNode = vertices.get(toLoc);
+			return getEdge(fromNode, toNode);
+		}
+	}
+	
+	private MapEdge getEdge(MapNode fromNode, MapNode toNode) {
+		Set<MapEdge> outEdges = fromNode.getOutEdges();
+		for (MapEdge outEdge: outEdges) {
+			if (vertices.get(outEdge.getToLoc()) == toNode) {
+				return outEdge;
+			}
+		}
+		return null;
+	}
+	
+	private MapNode getClosestNode(Set<MapNode> q, HashMap<MapNode, Double> dist) {
+		if (q.isEmpty()) {
+			return null;
+		} 
+		double minDist = INFINITE;
+		MapNode closestNode = null;
+		for (MapNode node: q) {
+			if (dist.get(node) < minDist) {
+				minDist = dist.get(node);
+				closestNode = node;
+			}
+		}
+		return closestNode;
+	}
+	
+	private MapNode getClosestNode(
+			Set<MapNode> q, 
+			HashMap<MapNode, Double> dist,
+			HashMap<MapNode, Double> est) {
+		if (q.isEmpty()) {
+			return null;
+		} 
+		double minDist = INFINITE;
+		MapNode closestNode = null;
+		for (MapNode node: q) {
+			if (dist.get(node) + est.get(node) < minDist) {
+				minDist = dist.get(node) +est.get(node);
+				closestNode = node;
+			}
+		}
+		return closestNode;
+	}
 	
 	
 	public static void main(String[] args)

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.PriorityQueue;
 
@@ -172,31 +173,6 @@ public class MapGraph {
 		return null;
 	}
 	
-	// Convert parent map into path from start to goal as linked list
-	// Return a linked list with only goal node if parent map is empty
-	// Currently this method assume the parent map has all required 
-	// information for building the path
-	// Only been tested with BST but should works fine with Dijkstra 
-	// and A* with minimal revisions
-	private List<GeographicPoint> parentMap2Path(
-			GeographicPoint start,
-			GeographicPoint goal,
-			HashMap<GeographicPoint, GeographicPoint> parentMap) {
-		List<GeographicPoint> path = new LinkedList<GeographicPoint>();
-		path.add(goal);
-		if (parentMap.isEmpty()) {
-			return path;
-		}
-		GeographicPoint currPoint = goal;
-		GeographicPoint parentPoint;
-		while (!currPoint.equals(start)) {
-			parentPoint = parentMap.get(currPoint);
-			path.add(0, parentPoint);
-			currPoint = parentPoint;
-		}
-		return path;
-	}
-	
 
 	/** Find the path from start to goal using Dijkstra's algorithm
 	 * 
@@ -296,7 +272,6 @@ public class MapGraph {
 		for (MapNode node: vertices.values()) {
 			q.add(node);
 			dist.put(node, INFINITE);
-//			est.put(node, goal.distance(node.getLocation()));
 			est.put(node, INFINITE);
 		}
 		
@@ -324,6 +299,127 @@ public class MapGraph {
 		return parentMap2Path(start, goal, parentMap); 
 	}
 
+	public List<MapNode> TSP() {
+		if (!isConnected()) {
+			System.out.println("Not connected!");
+			return null;
+		}
+		System.out.println("Connected!");
+		HashMap<MapNode, HashMap<MapNode, Double>> pairwiseDists = calcPairwiseTravelDist();
+		List<MapNode> TSPTravel =  greedyTSP(pairwiseDists);
+		System.out.println("Graph order:");
+		System.out.println(vertices.size());
+		System.out.println("Greedy TSP length:");
+		System.out.println(calcTSPLength(TSPTravel, pairwiseDists));
+		return TSPTravel;
+	}
+	
+	private List<MapNode> greedyTSP(HashMap<MapNode, HashMap<MapNode, Double>> dists) {
+		if (vertices == null || vertices.size() == 0) {
+			return null;
+		}
+		List<MapNode> travel = new ArrayList<MapNode>();
+		Set<MapNode> visited = new HashSet<MapNode>();
+		MapNode nextNode = pickInitNode();
+		while (nextNode != null) {
+			travel.add(nextNode);
+			visited.add(nextNode);
+			nextNode = pickGreedyNextNode(nextNode, visited, dists);
+		}
+		return travel;
+	}
+	
+	private HashMap<MapNode, HashMap<MapNode, Double>> calcPairwiseTravelDist() {
+		HashMap<MapNode, HashMap<MapNode, Double>> pairwiseTravelDist = new HashMap<MapNode, HashMap<MapNode, Double>>();
+		for (MapNode fromNode: vertices.values()) {
+			HashMap<MapNode, Double> travelDists = new HashMap<MapNode, Double>();
+			for (MapNode toNode: vertices.values()) {
+				double travelDist;
+				if (fromNode == toNode) {
+					continue;
+				} else if (getNeighborNodes(fromNode).contains(toNode)) {
+					MapEdge connectingEdge = getEdge(fromNode, toNode);
+					travelDist = connectingEdge.getLength();
+					travelDists.put(toNode, travelDist);
+				} else {
+					List<GeographicPoint> travelPath = aStarSearch(fromNode.getLocation(), toNode.getLocation());
+					travelDist = calcPathLength(travelPath);
+					travelDists.put(toNode, travelDist);
+				}
+			}
+			pairwiseTravelDist.put(fromNode, travelDists);
+		}
+		return pairwiseTravelDist;
+	}
+	
+	private Double calcPathLength(List<GeographicPoint> path) {
+		if (path == null || path.size() <= 1) {
+			return (double) 0;
+		}
+		double pathLength = 0.0;
+		for (int i = 0; i < path.size() - 1; i++) {
+			MapNode currFrom = vertices.get(path.get(i));
+			MapNode currTo = vertices.get(path.get(i + 1));
+			MapEdge currEdge = getEdge(currFrom, currTo);
+			pathLength += currEdge.getLength();
+		}
+		return pathLength;
+	}
+	
+	private MapNode pickInitNode() {
+		return vertices.values().iterator().next();
+	}
+	
+	private MapNode pickGreedyNextNode(MapNode currNode, Set<MapNode> visited, HashMap<MapNode, HashMap<MapNode, Double>> dists) {
+		GeographicPoint currNodeLoc = currNode.getLocation(); 
+		MapNode currNearest = null;
+		double currNearestDist = INFINITE;
+		for (MapNode node: vertices.values()) {
+			if (visited.contains(node) || node == currNode) {
+				continue;
+			}
+			double dist = node.getLocation().distance(currNodeLoc);
+			if (dist < currNearestDist) {
+				currNearest = node;
+				currNearestDist = dist;
+			}
+		}
+		return currNearest;
+	}
+	
+	private boolean isConnected() {
+		MapNode currNode = pickInitNode();
+		Set<MapNode> visited = new HashSet<MapNode>();
+		List<MapNode> queue = new LinkedList<MapNode>();
+		
+		queue.add(currNode);
+		visited.add(currNode);
+		
+		while(!queue.isEmpty()) {
+			currNode = queue.remove(0);
+			for (MapEdge outEdge: currNode.getOutEdges()) {
+				MapNode neighbor = vertices.get(outEdge.getToLoc());
+				if (!visited.contains(neighbor)) {
+					visited.add(neighbor);
+					queue.add(neighbor);
+				}
+			}
+		}
+		return visited.size() == vertices.size();
+	}
+
+	private Double calcTSPLength(List<MapNode> travel, HashMap<MapNode, HashMap<MapNode, Double>> dists) {
+		if (travel == null || travel.size() <= 1) {
+			return (double) 0;
+		}
+		double TSPLength = 0.0;
+		for (int i = 0; i < travel.size(); i++) {
+			MapNode currFrom = travel.get(i);
+			MapNode currTo = travel.get((i + 1) % travel.size());
+			TSPLength += dists.get(currFrom).get(currTo);
+		}
+		return TSPLength;
+	}
 	
 	private List<MapNode> getNeighborNodes(MapNode node) {
 		List<MapNode> neighbors = new LinkedList<MapNode>();
@@ -385,7 +481,31 @@ public class MapGraph {
 		}
 		return closestNode;
 	}
-	
+
+	// Convert parent map into path from start to goal as linked list
+	// Return a linked list with only goal node if parent map is empty
+	// Currently this method assume the parent map has all required 
+	// information for building the path
+	// Only been tested with BST but should works fine with Dijkstra 
+	// and A* with minimal revisions
+	private List<GeographicPoint> parentMap2Path(
+			GeographicPoint start,
+			GeographicPoint goal,
+			HashMap<GeographicPoint, GeographicPoint> parentMap) {
+		List<GeographicPoint> path = new LinkedList<GeographicPoint>();
+		path.add(goal);
+		if (parentMap.isEmpty()) {
+			return path;
+		}
+		GeographicPoint currPoint = goal;
+		GeographicPoint parentPoint;
+		while (!currPoint.equals(start)) {
+			parentPoint = parentMap.get(currPoint);
+			path.add(0, parentPoint);
+			currPoint = parentPoint;
+		}
+		return path;
+	}
 	
 	public static void main(String[] args)
 	{
@@ -413,6 +533,8 @@ public class MapGraph {
 		List<GeographicPoint> testroute = simpleTestMap.dijkstra(testStart,testEnd);
 		List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
 		
+		System.out.println("TSP Test using simpletest");
+		simpleTestMap.TSP();
 		
 		MapGraph testMap = new MapGraph();
 		GraphLoader.loadRoadMap("data/maps/utc.map", testMap);
@@ -433,6 +555,9 @@ public class MapGraph {
 		testroute2 = testMap.aStarSearch(testStart,testEnd);
 		//*/
 		
+		System.out.println("TSP Test using utc");
+		testMap.TSP();
+		
 		
 		/* Use this code in Week 3 End of Week Quiz */
 		///*
@@ -449,7 +574,18 @@ public class MapGraph {
 		List<GeographicPoint> route2 = theMap.aStarSearch(start,end);
 
 		//*/
+		System.out.println("TSP Test using quiz map");
+		theMap.TSP();
 		
+		/* Use this code in Week 3 End of Week Quiz */
+		///*
+		MapGraph hollywood_s = new MapGraph();
+		System.out.print("DONE. \nLoading the map...");
+		GraphLoader.loadRoadMap("data/maps/hollywood_small.map", hollywood_s);
+		System.out.println("DONE.");
+
+		System.out.println("TSP Test using hollywood_s map");
+		hollywood_s.TSP();
 	}
 	
 }

@@ -299,19 +299,72 @@ public class MapGraph {
 		return parentMap2Path(start, goal, parentMap); 
 	}
 
-	public List<MapNode> TSP() {
-		if (!isConnected()) {
-			System.out.println("Not connected!");
-			return null;
+	public List<MapNode> TSP(boolean geoDist) {
+		HashMap<MapNode, HashMap<MapNode, Double>> pairwiseDists;
+		if (!geoDist) {
+			if (!isConnected()) {
+				System.out.println("Not connected!");
+				return null;
+			}
+			System.out.println("Connected!");
+			pairwiseDists = calcPairwiseTravelDist();
+		} else {
+			pairwiseDists = calcPairwiseGeoDist();
 		}
-		System.out.println("Connected!");
-		HashMap<MapNode, HashMap<MapNode, Double>> pairwiseDists = calcPairwiseTravelDist();
 		List<MapNode> TSPTravel =  greedyTSP(pairwiseDists);
+		double greedyTSPLen = calcTSPLength(TSPTravel, pairwiseDists);
 		System.out.println("Graph order:");
 		System.out.println(vertices.size());
-		System.out.println("Greedy TSP length:");
-		System.out.println(calcTSPLength(TSPTravel, pairwiseDists));
-		return TSPTravel;
+		List<MapNode> twoOptTravel = TSPTravel;
+		double twoOptTravelLen = greedyTSPLen;
+		List<MapNode> bestTravel = TSPTravel;
+		double bestTravelLen = greedyTSPLen;
+		if (vertices.size() >= 4) {
+			do {
+				System.out.println("Found better travel!");
+				System.out.println(bestTravelLen);
+				bestTravelLen = twoOptTravelLen;
+				bestTravel = twoOptTravel;
+				twoOptTravel = twoOptIteration(bestTravel, pairwiseDists);
+				twoOptTravelLen = calcTSPLength(twoOptTravel, pairwiseDists);
+			} while (twoOptTravelLen < bestTravelLen);
+		}
+		return bestTravel;
+	}
+	
+	private List<MapNode> twoOptIteration(List<MapNode> travel, HashMap<MapNode, HashMap<MapNode, Double>> dists) {
+		List<MapNode> newTravel = new ArrayList<MapNode>(travel);
+		double newTravelLen = INFINITE;
+		List<MapNode> bestTravel = new ArrayList<MapNode>(travel);
+		double bestTravelLen = calcTSPLength(travel, dists);
+		for (int i = 1; i < travel.size() - 2; i++) {
+			for (int j = 2; j < travel.size() - 1; j ++) {
+				newTravel = twoOptSwap(travel, i, j);
+				newTravelLen = calcTSPLength(newTravel, dists);
+				if (newTravelLen < bestTravelLen) {
+					bestTravel = newTravel;
+					bestTravelLen = newTravelLen;
+				}
+			}
+		}
+		return bestTravel;
+	}
+	
+	private List<MapNode> twoOptSwap(List<MapNode> path, int begin, int end) { //both inclusive
+		if (begin < 1 || end >= path.size() - 1 || end <= begin) {
+			return new ArrayList<MapNode>(path);
+		}
+		List<MapNode> swapPath = new ArrayList<MapNode>();
+		for (int i = 0; i < begin; i++) {
+			swapPath.add(path.get(i));
+		}
+		for (int i = end; i >= begin; i--) {
+			swapPath.add(path.get(i));
+		}
+		for (int i = end + 1; i < path.size(); i++) {
+			swapPath.add(path.get(i));
+		}
+		return swapPath;
 	}
 	
 	private List<MapNode> greedyTSP(HashMap<MapNode, HashMap<MapNode, Double>> dists) {
@@ -327,6 +380,25 @@ public class MapGraph {
 			nextNode = pickGreedyNextNode(nextNode, visited, dists);
 		}
 		return travel;
+	}
+	
+	private HashMap<MapNode, HashMap<MapNode, Double>> calcPairwiseGeoDist() {
+		HashMap<MapNode, HashMap<MapNode, Double>> pairwiseGeoDist = new HashMap<MapNode, HashMap<MapNode, Double>>();
+		for (MapNode fromNode: vertices.values()) {
+			HashMap<MapNode, Double> geoDists = new HashMap<MapNode, Double>();
+			for (MapNode toNode: vertices.values()) {
+				double geoDist;
+				if (fromNode == toNode) {
+					continue;
+				} else {
+					GeographicPoint fromPoint = fromNode.getLocation();
+					GeographicPoint toPoint = toNode.getLocation();
+					geoDists.put(toNode, fromPoint.distance(toPoint));
+				}
+			}
+			pairwiseGeoDist.put(fromNode, geoDists);
+		}
+		return pairwiseGeoDist;
 	}
 	
 	private HashMap<MapNode, HashMap<MapNode, Double>> calcPairwiseTravelDist() {
@@ -534,7 +606,7 @@ public class MapGraph {
 		List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
 		
 		System.out.println("TSP Test using simpletest");
-		simpleTestMap.TSP();
+		simpleTestMap.TSP(true);
 		
 		MapGraph testMap = new MapGraph();
 		GraphLoader.loadRoadMap("data/maps/utc.map", testMap);
@@ -556,7 +628,7 @@ public class MapGraph {
 		//*/
 		
 		System.out.println("TSP Test using utc");
-		testMap.TSP();
+		testMap.TSP(true);
 		
 		
 		/* Use this code in Week 3 End of Week Quiz */
@@ -573,19 +645,25 @@ public class MapGraph {
 		List<GeographicPoint> route = theMap.dijkstra(start,end);
 		List<GeographicPoint> route2 = theMap.aStarSearch(start,end);
 
-		//*/
 		System.out.println("TSP Test using quiz map");
-		theMap.TSP();
+		theMap.TSP(true);
 		
-		/* Use this code in Week 3 End of Week Quiz */
-		///*
 		MapGraph hollywood_s = new MapGraph();
 		System.out.print("DONE. \nLoading the map...");
 		GraphLoader.loadRoadMap("data/maps/hollywood_small.map", hollywood_s);
 		System.out.println("DONE.");
 
 		System.out.println("TSP Test using hollywood_s map");
-		hollywood_s.TSP();
+		hollywood_s.TSP(true);
+		
+		MapGraph hollywood_l = new MapGraph();
+		System.out.print("DONE. \nLoading the map...");
+		GraphLoader.loadRoadMap("data/maps/hollywood_large.map", hollywood_l);
+		System.out.println("DONE.");
+
+		System.out.println("TSP Test using hollywood_b map");
+		hollywood_l.TSP(true);
+
 	}
 	
 }
